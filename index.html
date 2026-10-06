@@ -17,10 +17,6 @@
       --today-border: #1a73e8;
       --text: #222222;
       --text-muted: #888888;
-      --badge-al: #f1f3f4;
-      --badge-al-text: #3c4043;
-      --badge-ph: #feeceb;
-      --badge-ph-text: #c5221f;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -64,7 +60,7 @@
     .btn:active { background: #e0e0e5; }
     .btn-today { background: #e8f0fe; color: #1967d2; border-color: #aecbfa; }
 
-    /* 星期標頭 (週日~週六) */
+    /* 星期標頭 (週日率先) */
     .weekdays-bar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -82,7 +78,7 @@
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      grid-auto-rows: minmax(78px, 1fr);
+      grid-auto-rows: minmax(88px, 1fr);
       background: var(--border);
       gap: 1px;
       flex: 1;
@@ -90,7 +86,7 @@
 
     .cell {
       background: var(--weekday-col);
-      padding: 2px 2px 4px 2px;
+      padding: 2px 2px 3px 2px;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -113,7 +109,7 @@
       padding: 0 1px;
     }
     .day-num {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       line-height: 1;
     }
@@ -123,50 +119,61 @@
     .ph-label {
       font-size: 8px;
       color: #d93025;
-      transform: scale(0.9);
+      transform: scale(0.88);
       transform-origin: right center;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 70%;
+      max-width: 72%;
     }
 
-    /* 條目微型清單 (仿 Jorte 細字風格) */
+    /* 條目微型清單 */
     .event-stream {
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 2px;
       flex: 1;
       overflow-y: hidden;
     }
-    .item {
-      font-size: 9.5px;
-      line-height: 1.15;
-      padding: 1px 2px;
+
+    /* 關鍵：兩行式卡片設計 */
+    .item-card {
+      background: rgba(0, 0, 0, 0.04);
+      border-left: 2px solid #5c6bc0;
       border-radius: 2px;
+      padding: 1px 2px;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .item-card .name-line {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #202124;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-weight: 500;
     }
-    .item.al {
-      background: rgba(0, 0, 0, 0.05);
-      color: #333333;
-      border-left: 2px solid #5c6bc0;
-    }
-    .item.ph {
-      background: #fce8e6;
-      color: #c5221f;
-      border-left: 2px solid #ea4335;
-      font-weight: 600;
-    }
-    .item.duty {
-      background: #e6f4ea;
-      color: #137333;
-      border-left: 2px solid #34a853;
-    }
-    .more-counter {
+    .item-card .status-line {
       font-size: 8.5px;
+      color: #555555;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 紅日條目 */
+    .item-card.ph {
+      background: #fce8e6;
+      border-left-color: #ea4335;
+    }
+    .item-card.ph .name-line {
+      color: #c5221f;
+      font-size: 9px;
+    }
+
+    .more-counter {
+      font-size: 8px;
       color: var(--text-muted);
       text-align: right;
       padding-right: 2px;
@@ -202,18 +209,21 @@
     }
     .person-chip {
       background: #f1f3f4;
-      padding: 4px 8px;
-      border-radius: 4px;
+      padding: 5px 9px;
+      border-radius: 5px;
       border-left: 3px solid #1a73e8;
       display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      flex-direction: column;
+      gap: 1px;
     }
+    .chip-name { font-weight: 700; color: #202124; }
+    .chip-desc { font-size: 0.75rem; color: #666; }
     .chip-ph {
       background: #fce8e6;
       border-left-color: #d93025;
       color: #c5221f;
       font-weight: 600;
+      justify-content: center;
     }
 
     /* 懸浮設定按鈕 */
@@ -278,7 +288,6 @@
   <script>
     // 香港公眾假期固定資料庫 (繁體中文)
     const HK_PUBLIC_HOLIDAYS = {
-      // 2026 年
       "2026-01-01": "元旦",
       "2026-02-17": "農曆年初一",
       "2026-02-18": "農曆年初二",
@@ -296,7 +305,6 @@
       "2026-10-19": "重陽節翌日",
       "2026-12-25": "聖誕節",
       "2026-12-26": "節禮日",
-      // 2027 年
       "2027-01-01": "元旦",
       "2027-02-06": "農曆年初一",
       "2027-02-08": "農曆年初三",
@@ -312,27 +320,55 @@
       "2027-10-01": "國慶日",
       "2027-10-08": "重陽節",
       "2027-12-25": "聖誕節",
-      "2027-12-27": "聖誕節後第一個週日"
+      "2027-12-27": "節禮日"
     };
 
-    // 本地預載測試日程 (支援自動同步 Google 日曆)
+    // 智能拆分「名字」與「假種/狀態」為兩行
+    function parseEventSummary(rawText) {
+      const text = rawText.trim();
+      
+      // 匹配空格：如 "Grace V/L pm" 拆分為 "Grace" 和 "V/L pm"
+      const firstSpaceIdx = text.indexOf(" ");
+      if (firstSpaceIdx > 0) {
+        return {
+          name: text.substring(0, firstSpaceIdx).trim(),
+          status: text.substring(firstSpaceIdx + 1).trim()
+        };
+      }
+
+      // 匹配括號：如 "Connie(AL)" 拆分為 "Connie" 和 "AL"
+      const bracketMatch = text.match(/^([^(（]+)[(（]([^)）]+)[)）]$/);
+      if (bracketMatch) {
+        return {
+          name: bracketMatch[1].trim(),
+          status: bracketMatch[2].trim()
+        };
+      }
+
+      // 如果只有單個名字（例如 "Barrett"），第二行預設顯示 "放假"
+      return {
+        name: text,
+        status: "放假"
+      };
+    }
+
+    // 預載示範日程 (已包含兩行測試)
     let teamEvents = [
-      { date: "2026-10-05", name: "Grace Lee", type: "al" },
-      { date: "2026-10-08", name: "Connie", type: "al" },
-      { date: "2026-10-08", name: "Grace", type: "al" },
-      { date: "2026-10-09", name: "Connie", type: "al" },
-      { date: "2026-10-12", name: "Barrett", type: "al" },
-      { date: "2026-10-13", name: "Grace", type: "al" },
-      { date: "2026-10-16", name: "Connie", type: "al" },
-      { date: "2026-10-16", name: "Yan V/L", type: "al" },
-      { date: "2026-10-18", name: "Chung", type: "al" },
-      { date: "2026-10-19", name: "Day off", type: "al" }
+      { date: "2026-10-05", raw: "Grace Lee AL" },
+      { date: "2026-10-08", raw: "Connie V/L am" },
+      { date: "2026-10-08", raw: "Grace V/L pm" },
+      { date: "2026-10-09", raw: "Connie AL" },
+      { date: "2026-10-12", raw: "Barrett V/L" },
+      { date: "2026-10-13", raw: "Grace 補假" },
+      { date: "2026-10-16", raw: "Connie AL" },
+      { date: "2026-10-16", raw: "Yan V/L pm" },
+      { date: "2026-10-18", raw: "Chung 輪休" },
+      { date: "2026-10-19", raw: "Day off" }
     ];
 
-    let currentDate = new Date(2026, 9, 1); // 預設 2026年10月
-    let selectedDateStr = "2026-10-06";
+    let currentDate = new Date(2026, 9, 1); // 2026年10月
+    let selectedDateStr = "2026-10-08";
 
-    // 格式化 YYYY-MM-DD
     function fmtDate(d) {
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -349,26 +385,24 @@
       grid.innerHTML = "";
 
       const firstDay = new Date(year, month, 1);
-      const startDayOfWeek = firstDay.getDay(); // 0 is Sunday
+      const startDayOfWeek = firstDay.getDay();
       const totalDays = new Date(year, month + 1, 0).getDate();
-
-      // 計算需要補齊的上月天數
       const prevMonthDays = new Date(year, month, 0).getDate();
       const todayStr = fmtDate(new Date());
 
-      // 繪製前月留白格
+      // 補齊前月
       for (let i = startDayOfWeek - 1; i >= 0; i--) {
         const d = new Date(year, month - 1, prevMonthDays - i);
         grid.appendChild(createCell(d, true));
       }
 
-      // 繪製當月完整日數
+      // 當月完整日
       for (let day = 1; day <= totalDays; day++) {
         const d = new Date(year, month, day);
         grid.appendChild(createCell(d, false, todayStr));
       }
 
-      // 補足末尾讓總格數為 7 的倍數 (滿 5 或 6 行)
+      // 補齊後月
       const currentCells = grid.children.length;
       const remaining = (7 - (currentCells % 7)) % 7;
       for (let j = 1; j <= remaining; j++) {
@@ -398,43 +432,47 @@
       num.textContent = dateObj.getDate();
       topBar.appendChild(num);
 
-      // 香港紅日標記
+      // 香港紅日標籤
       const phName = HK_PUBLIC_HOLIDAYS[dateStr];
       if (phName) {
         const ph = document.createElement("span");
         ph.className = "ph-label";
         ph.textContent = phName;
         topBar.appendChild(ph);
-        cell.classList.add("sun-col"); // 紅日打上粉紅底色
+        cell.classList.add("sun-col");
       }
       cell.appendChild(topBar);
 
-      // 日程條目容器
+      // 條目容器
       const stream = document.createElement("div");
       stream.className = "event-stream";
 
-      // 如果是紅日，先插入紅日行
+      // 若是紅日，頂部卡片顯示紅日名稱
       if (phName) {
-        const phItem = document.createElement("div");
-        phItem.className = "item ph";
-        phItem.textContent = phName;
-        stream.appendChild(phItem);
+        const phCard = document.createElement("div");
+        phCard.className = "item-card ph";
+        phCard.innerHTML = `<span class="name-line">${phName}</span>`;
+        stream.appendChild(phCard);
       }
 
-      // 當日請假同事名單
+      // 當日請假名單（拆成兩行顯示）
       const evts = teamEvents.filter(e => e.date === dateStr);
-      const maxShow = 3;
+      const maxShow = 2; // 兩行式卡片高度較高，手機上每格最合適預覽 2 個，其餘按 +1
       evts.slice(0, maxShow).forEach(e => {
-        const item = document.createElement("div");
-        item.className = `item ${e.type || 'al'}`;
-        item.textContent = e.name;
-        stream.appendChild(item);
+        const parsed = parseEventSummary(e.raw);
+        const card = document.createElement("div");
+        card.className = "item-card";
+        card.innerHTML = `
+          <span class="name-line">${parsed.name}</span>
+          <span class="status-line">${parsed.status}</span>
+        `;
+        stream.appendChild(card);
       });
 
       if (evts.length > maxShow) {
         const more = document.createElement("div");
         more.className = "more-counter";
-        more.textContent = `+${evts.length - maxShow}`;
+        more.textContent = `+${evts.length - maxShow} 人`;
         stream.appendChild(more);
       }
 
@@ -459,8 +497,7 @@
       const ph = HK_PUBLIC_HOLIDAYS[dateStr];
       const evts = teamEvents.filter(e => e.date === dateStr);
 
-      const totalCount = evts.length;
-      document.getElementById("trayCountText").textContent = `${totalCount} 人休假`;
+      document.getElementById("trayCountText").textContent = `${evts.length} 人休假`;
 
       if (ph) {
         const chip = document.createElement("div");
@@ -475,14 +512,18 @@
       }
 
       evts.forEach(e => {
+        const parsed = parseEventSummary(e.raw);
         const chip = document.createElement("div");
         chip.className = "person-chip";
-        chip.textContent = `👤 ${e.name}`;
+        chip.innerHTML = `
+          <span class="chip-name">👤 ${parsed.name}</span>
+          <span class="chip-desc">${parsed.status}</span>
+        `;
         trayList.appendChild(chip);
       });
     }
 
-    // 支援從 Google 日曆公開 iCal (.ics) 自動同步
+    // iCal 遠端同步
     async function loadGoogleIcal(url) {
       try {
         const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
@@ -491,7 +532,7 @@
         parseIcsText(text);
         renderCalendar();
       } catch (err) {
-        console.warn("無法取得遠端日曆，使用預設排班記錄", err);
+        console.warn("無法取得遠端日曆，使用本地快取記錄", err);
       }
     }
 
@@ -509,11 +550,11 @@
           curDate = "";
         } else if (line.startsWith("END:VEVENT")) {
           if (curDate && curSummary) {
-            parsed.push({ date: curDate, name: curSummary, type: "al" });
+            parsed.push({ date: curDate, raw: curSummary });
           }
           insideEvent = false;
         } else if (insideEvent) {
-          if (line.startsWith("SUMMARY:")) curSummary = line.replace("SUMMARY:", "");
+          if (line.startsWith("SUMMARY:")) curSummary = line.replace("SUMMARY:", "").trim();
           if (line.startsWith("DTSTART;VALUE=DATE:")) {
             const raw = line.replace("DTSTART;VALUE=DATE:", "").trim();
             if (raw.length === 8) {
@@ -536,7 +577,6 @@
       }
     }
 
-    // 月份切換按鈕綁定
     document.getElementById("prevBtn").onclick = () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
       renderCalendar();
@@ -551,10 +591,8 @@
       renderCalendar();
     };
 
-    // 啟動渲染
     renderCalendar();
 
-    // 如儲存有 iCal 網址則自動拉取
     const savedIcs = localStorage.getItem("ical_url") || "https://calendar.google.com/calendar/ical/6dd388163940311c287810b7326825381de533b9216ca69b81bce5773b9f3aeb%40group.calendar.google.com/public/basic.ics";
     loadGoogleIcal(savedIcs);
   </script>
