@@ -352,19 +352,8 @@
       };
     }
 
-    // 預載示範日程 (已包含兩行測試)
-    let teamEvents = [
-      { date: "2026-10-05", raw: "Grace Lee AL" },
-      { date: "2026-10-08", raw: "Connie V/L am" },
-      { date: "2026-10-08", raw: "Grace V/L pm" },
-      { date: "2026-10-09", raw: "Connie AL" },
-      { date: "2026-10-12", raw: "Barrett V/L" },
-      { date: "2026-10-13", raw: "Grace 補假" },
-      { date: "2026-10-16", raw: "Connie AL" },
-      { date: "2026-10-16", raw: "Yan V/L pm" },
-      { date: "2026-10-18", raw: "Chung 輪休" },
-      { date: "2026-10-19", raw: "Day off" }
-    ];
+    // 清空示範日程，完全自動從 Google 日曆同步真實假期
+    let teamEvents = [];
 
     let currentDate = new Date(2026, 9, 1); // 2026年10月
     let selectedDateStr = "2026-10-08";
