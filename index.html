@@ -491,28 +491,45 @@
       });
     }
 
-// 官方專屬管道（免 Proxy、零阻擋、秒變綠燈）
+// Google 官方 Calendar API 直連（秒變綠燈、永不失效）
     async function loadGoogleIcal() {
       const dot = document.getElementById("syncDot");
-      dot.style.background = "#fbbc04"; // 黃燈：同步中
+      dot.style.background = "#fbbc04"; // 黃燈：載入中
 
-      // 請將引號內的網址換成你在第一步複製到的 Google Apps Script 網址
-      const apiUrl = "https://script.google.com/macros/s/AKfycbzArHbFKnOKuHd57pkToChGrYcSUGBp1BsIx_S3LRQEirs46IxEP4F-O-AU7uHZZigqAA/exec";
+      // 1. 你的請假日曆 ID
+      const calId = "6dd388163940311c287810b7326825381de533b9216ca69b81bce5773b9f3aeb@group.calendar.google.com";
+      
+      // 2. 貼上你剛剛建立的 API Key (保留引號)
+      const apiKey = "AIzaSyBGJy71U1vgtcsAeXHrzI3b6v3F64HN0uk";
+
+      // 自動讀取前後 3 個月的假期數據
+      const timeMin = new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, 1).toISOString();
+      const timeMax = new Date(currentDate.getFullYear(), currentDate.getMonth() + 3, 1).toISOString();
+
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?key=${apiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
 
       try {
-        const res = await fetch(apiUrl);
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            teamEvents = data;
-            renderCalendar();
-            dot.style.background = "#34a853"; // 綠燈：成功！
-            return;
-          }
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("API 請求失敗，狀態碼: " + res.status);
+
+        const data = await res.json();
+        if (data.items) {
+          teamEvents = data.items.map(item => {
+            // 自動支援「全天」與「時段」兩種模式
+            const dateStr = item.start.date || (item.start.dateTime ? item.start.dateTime.slice(0, 10) : "");
+            return {
+              date: dateStr,
+              raw: item.summary || "放假"
+            };
+          }).filter(e => e.date);
+
+          renderCalendar();
+          dot.style.background = "#34a853"; // 綠燈：成功！
+          console.log("成功同步事件數量：", teamEvents.length);
+          return;
         }
-        throw new Error("API response error");
-      } catch (e) {
-        console.warn("同步失敗", e);
+      } catch (err) {
+        console.error("同步失敗：", err);
         dot.style.background = "#ea4335"; // 紅燈
       }
     }
