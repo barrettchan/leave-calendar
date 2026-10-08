@@ -491,31 +491,28 @@
       });
     }
 
-// 官方直連模式（不經第三方 Proxy，100% 穩定秒轉綠燈）
+// 官方專屬管道（免 Proxy、零阻擋、秒變綠燈）
     async function loadGoogleIcal() {
       const dot = document.getElementById("syncDot");
-      dot.style.background = "#fbbc04"; // 黃燈：載入中
+      dot.style.background = "#fbbc04"; // 黃燈：同步中
 
-      // 使用專為前端抓取公開 iCal 設計的 Cloudflare CDN 鏡像
-      const icsUrl = "https://calendar.google.com/calendar/ical/6dd388163940311c287810b7326825381de533b9216ca69b81bce5773b9f3aeb%40group.calendar.google.com/public/basic.ics";
-      
-      // 使用高速無限制的 CORS 專用線路
-      const targetUrl = "https://corsproxy.io/?" + encodeURIComponent(icsUrl + "?t=" + Date.now());
+      // 請將引號內的網址換成你在第一步複製到的 Google Apps Script 網址
+      const apiUrl = "https://script.google.com/macros/s/AKfycbzArHbFKnOKuHd57pkToChGrYcSUGBp1BsIx_S3LRQEirs46IxEP4F-O-AU7uHZZigqAA/exec";
 
       try {
-        const res = await fetch(targetUrl);
+        const res = await fetch(apiUrl);
         if (res.ok) {
-          const text = await res.text();
-          if (text && text.includes("BEGIN:VCALENDAR")) {
-            parseIcsText(text);
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            teamEvents = data;
             renderCalendar();
             dot.style.background = "#34a853"; // 綠燈：成功！
             return;
           }
         }
-        throw new Error("Parse failed");
+        throw new Error("API response error");
       } catch (e) {
-        console.warn("同步失敗，嘗試備援方案...", e);
+        console.warn("同步失敗", e);
         dot.style.background = "#ea4335"; // 紅燈
       }
     }
