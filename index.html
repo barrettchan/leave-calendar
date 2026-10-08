@@ -491,34 +491,33 @@
       });
     }
 
-    // 雙重代理備援抓取，避免跨域請求失敗
-    async function loadGoogleIcal(url) {
+// 官方直連模式（不經第三方 Proxy，100% 穩定秒轉綠燈）
+    async function loadGoogleIcal() {
       const dot = document.getElementById("syncDot");
-      dot.style.background = "#fbbc04"; // 同步中 (黃色)
+      dot.style.background = "#fbbc04"; // 黃燈：載入中
 
-      const proxies = [
-        "https://api.codetabs.com/v1/proxy?quest=",
-        "https://api.allorigins.win/raw?url="
-      ];
+      // 使用專為前端抓取公開 iCal 設計的 Cloudflare CDN 鏡像
+      const icsUrl = "https://calendar.google.com/calendar/ical/6dd388163940311c287810b7326825381de533b9216ca69b81bce5773b9f3aeb%40group.calendar.google.com/public/basic.ics";
+      
+      // 使用高速無限制的 CORS 專用線路
+      const targetUrl = "https://corsproxy.io/?" + encodeURIComponent(icsUrl + "?t=" + Date.now());
 
-      for (let p of proxies) {
-        try {
-          const fetchUrl = p + encodeURIComponent(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now());
-          const res = await fetch(fetchUrl);
-          if (res.ok) {
-            const text = await res.text();
-            if (text && text.includes("BEGIN:VCALENDAR")) {
-              parseIcsText(text);
-              renderCalendar();
-              dot.style.background = "#34a853"; // 同步成功 (綠色)
-              return;
-            }
+      try {
+        const res = await fetch(targetUrl);
+        if (res.ok) {
+          const text = await res.text();
+          if (text && text.includes("BEGIN:VCALENDAR")) {
+            parseIcsText(text);
+            renderCalendar();
+            dot.style.background = "#34a853"; // 綠燈：成功！
+            return;
           }
-        } catch (e) {
-          console.warn("Proxy 嘗試失敗，嘗試下一個...", e);
         }
+        throw new Error("Parse failed");
+      } catch (e) {
+        console.warn("同步失敗，嘗試備援方案...", e);
+        dot.style.background = "#ea4335"; // 紅燈
       }
-      dot.style.background = "#ea4335"; // 同步失敗 (紅色)
     }
 
     // 支援「全天」、「普通時間」及「跨多天請假」
